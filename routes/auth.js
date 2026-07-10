@@ -17,8 +17,9 @@ router.post('/login', (req, res) => {
   const token = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-  db.prepare('INSERT INTO auth_tokens (id, email, token, used, expires_at) VALUES (?, ?, ?, 0, ?)')
-    .run(uuidv4(), email, token, expiresAt);
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  db.prepare('INSERT INTO sessions (id, user_id, email) VALUES (?, ?, ?)')
+  .run(sessionId, user.id, email);
 
   console.log(`[AUTH] Token generado para ${email}: ${token}`);
 
