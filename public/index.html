@@ -1,1 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vaultora — Secure Document Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #F9FAFB; color: #0F172A; min-height: 100vh; }
+    nav { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-size: 18px; font-weight: 700; color: #0F172A; letter-spacing: -0.5px; }
+    .nav-logo span { color: #6366F1; }
+    .page { display: none; }
+    .page.active { display: flex; }
+    #login-page { min-height: calc(100vh - 60px); align-items: center; justify-content: center; }
+    .auth-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .auth-card h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; color: #0F172A; }
+    .auth-card p { font-size: 14px; color: #64748B; margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; color: #0F172A; background: #FFFFFF; transition: border-color 0.15s; outline: none; }
+    input:focus { border-color: #6366F1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .btn-primary { width: 100%; padding: 11px; background: #6366F1; color: #FFFFFF; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+    .btn-primary:hover { background: #4F46E5; }
+    .btn-primary:disabled { background: #A5B4FC; cursor: not-allowed; }
+    .divider { border: none; border-top: 1px solid #E2E8F0; margin: 24px 0; }
+    .auth-footer { text-align: center; font-size: 13px; color: #64748B; }
+    #verify-page { min-height: calc(100vh - 60px); align-items: center; justify-content: center; }
+    #dashboard-page { min-height: calc(100vh - 60px); flex-direction: column; }
+    .dashboard-header { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; padding: 24px 40px; display: flex; align-items: center; justify-content: space-between; }
+    .dashboard-header h2 { font-size: 18px; font-weight: 600; }
+    .user-badge { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #64748B; }
+    .avatar { width: 32px; height: 32px; background: #6366F1; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600; }
+    .dashboard-content { padding: 32px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; }
+    .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; }
+    .card-label { font-size: 12px; font-weight: 500; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .card-value { font-size: 36px; font-weight: 700; color: #0F172A; margin-bottom: 4px; }
+    .card-value.highlight { color: #6366F1; }
+    .refresh-link { font-size: 12px; color: #6366F1; cursor: pointer; margin-bottom: 16px; display: inline-block; }
+    .refresh-link:hover { text-decoration: underline; }
+    .card p { font-size: 13px; color: #64748B; line-height: 1.5; margin-bottom: 20px; }
+    .btn-secondary { padding: 9px 18px; background: #FFFFFF; color: #0F172A; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s; }
+    .btn-secondary:hover { background: #F9FAFB; border-color: #9CA3AF; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .status-active { background: #DCFCE7; color: #166534; }
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-top: 14px; display: none; }
+    .alert.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+    .alert.success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
+    .alert.show { display: block; }
+    .logout-btn { background: none; border: none; font-size: 13px; color: #64748B; cursor: pointer; font-family: 'Inter', sans-serif; padding: 6px 10px; border-radius: 6px; transition: background 0.15s; }
+    .logout-btn:hover { background: #F1F5F9; }
+  </style>
+</head>
+<body>
 
+<nav>
+  <div class="nav-logo">Vault<span>ora</span></div>
+  <div id="nav-actions"></div>
+</nav>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" class="page active">
+  <div class="auth-card">
+    <h1>Sign in to Vaultora</h1>
+    <p>Enter your credentials to access your workspace.</p>
+    <div class="form-group">
+      <label>Email address</label>
+      <input type="email" id="login-email" placeholder="you@company.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" />
+    </div>
+    <div id="login-alert" class="alert error"></div>
+    <button class="btn-primary" onclick="handleLogin()">Continue</button>
+    <hr class="divider">
+    <p class="auth-footer">Don't have an account? <a href="#" style="color:#6366F1;text-decoration:none;font-weight:500;">Request access</a></p>
+  </div>
+</div>
+
+<!-- VERIFY PAGE -->
+<div id="verify-page" class="page">
+  <div class="auth-card">
+    <h1>Check your email</h1>
+    <p>We sent a verification code to <strong id="verify-email-label"></strong></p>
+    <div class="form-group">
+      <label>Verification code</label>
+      <input type="text" id="verify-token" placeholder="000000" maxlength="6" />
+    </div>
+    <div id="verify-alert" class="alert error"></div>
+    <button class="btn-primary" onclick="handleVerify()">Verify and sign in</button>
+    <hr class="divider">
+    <p class="auth-footer" style="cursor:pointer;" onclick="showPage('login-page')">Use a different account</p>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboard-page" class="page">
+  <div class="dashboard-header">
+    <h2>Overview</h2>
+    <div class="user-badge">
+      <div class="avatar" id="user-avatar"></div>
+      <span id="user-email-label"></span>
+      <button class="logout-btn" onclick="handleLogout()">Sign out</button>
+    </div>
+  </div>
+  <div class="dashboard-content">
+    <div class="card">
+      <div class="card-label">Available Credits</div>
+      <div class="card-value highlight" id="credits-display">—</div>
+      <span class="refresh-link" onclick="loadBalance()">Refresh balance</span>
+      <p>Credits are used to process and analyze documents in your workspace.</p>
+      <button class="btn-secondary" id="redeem-btn" onclick="handleRedeem()">Claim trial credits</button>
+      <div id="redeem-alert" class="alert"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Workspace Status</div>
+      <div style="margin-bottom:16px;">
+        <span class="status-badge status-active">Active</span>
+      </div>
+      <p>Your workspace is active and ready to use. Upgrade your plan to unlock additional features and storage.</p>
+      <button class="btn-secondary">Manage plan</button>
+    </div>
+    <div class="card">
+      <div class="card-label">Recent Activity</div>
+      <p style="margin-top:8px;">No recent activity in your workspace.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let sessionToken = null;
+  let userEmail = null;
+
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+  }
+
+  function showAlert(id, message, type) {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.className = `alert ${type} show`;
+  }
+
+  async function loadBalance() {
+    try {
+      const res = await fetch('/vaultora/api/credits/balance', {
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+      });
+      const data = await res.json();
+      document.getElementById('credits-display').textContent = data.credits;
+    } catch (e) {}
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+      showAlert('login-alert', 'Please fill in all fields.', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/vaultora/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('login-alert', data.error || 'Invalid credentials.', 'error');
+        return;
+      }
+
+      userEmail = email;
+      document.getElementById('verify-email-label').textContent = email;
+      document.getElementById('verify-token').value = '';
+      showPage('verify-page');
+
+    } catch (e) {
+      showAlert('login-alert', 'Connection error. Please try again.', 'error');
+    }
+  }
+
+  async function handleVerify() {
+    const token = document.getElementById('verify-token').value;
+
+    if (!token) {
+      showAlert('verify-alert', 'Please enter your verification code.', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/vaultora/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, token })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('verify-alert', data.error || 'Invalid or expired code.', 'error');
+        return;
+      }
+
+      sessionToken = data.session;
+      document.getElementById('user-email-label').textContent = userEmail;
+      document.getElementById('user-avatar').textContent = userEmail[0].toUpperCase();
+      await loadBalance();
+      showPage('dashboard-page');
+
+    } catch (e) {
+      showAlert('verify-alert', 'Connection error. Please try again.', 'error');
+    }
+  }
+
+  async function handleRedeem() {
+    const btn = document.getElementById('redeem-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    try {
+      const res = await fetch('/vaultora/api/credits/redeem', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('redeem-alert', data.error, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Claim trial credits';
+        return;
+      }
+
+      await loadBalance();
+      showAlert('redeem-alert', 'Trial credits added to your account.', 'success');
+      btn.textContent = 'Credits claimed';
+
+    } catch (e) {
+      showAlert('redeem-alert', 'Connection error.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Claim trial credits';
+    }
+  }
+
+  function handleLogout() {
+    sessionToken = null;
+    userEmail = null;
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    showPage('login-page');
+  }
+</script>
+
+</body>
+</html>
