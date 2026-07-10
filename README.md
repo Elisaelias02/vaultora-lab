@@ -2,11 +2,6 @@
 
 Lab vulnerable diseñado para demostrar ataques de Race Condition usando el Single-Packet Attack.
 
-Parte del canal **Cinn4mor0ll** / **AEGIS Security Research**.
-
-## Demo en vivo
-https://cinn4exif.lat/vaultora/
-
 ## Vulnerabilidades
 
 ### Escenario 1 — Limit Overrun
